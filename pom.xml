@@ -7,25 +7,7 @@
   <name>code-generator</name>
   <packaging>jar</packaging>
   <url>http://maven.apache.org</url>
-  <repositories>
-		<!-- 如有Nexus私服, 取消注释并指向正确的服务器地址.-->
-		<repository>
-			<id>nexus</id>
-			<name>Team Nexus Repository</name>
-			<url>http://10.105.101.127:8081/nexus/content/groups/public/</url>
-		</repository>
-	</repositories>
-	<!-- 设定插件仓库 如有Nexus私服, 取消注释并指向正确的服务器地址. -->
-	<pluginRepositories> 
-		<pluginRepository> 
-			<id>nexus</id>
-			<name>Team Nexus Repository</name>
-			<url>http://192.168.5.19:8081/nexus/content/groups/public/</url> 
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</pluginRepository>
-	</pluginRepositories>
+
 	
   <dependencies>
     <dependency>
