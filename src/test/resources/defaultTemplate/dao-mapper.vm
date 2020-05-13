@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="${projectName}.dao.${className}DAO" > 
+<!-- Result Map-->
+<resultMap id="BaseResultMap" type="${projectName}.data.${className}DO" >
+#foreach($item in $!{columnDatas})
+	<result column="$!item.columnName" property="$item.attrName"/>
+#end
+</resultMap>
+       
+<!-- $!{tableName} table all fields -->
+<sql id="baseColumnList" >
+	 $!{SQL.columnFields}
+</sql>
+   
+   
+<!-- 查询条件 -->
+<sql id="exampleWhereClause">
+where 1=1
+<trim  suffixOverrides="," >
+#foreach($item in $!{columnDatas})
+	#set($testStr = $!item.attrName + " != null")
+	#if($!item.dataType == 'String')
+		#set($testStr = $!testStr + " and " + $!item.attrName + " != ''")
+ 	#end
+<if test="$!testStr" >
+	    and $!item.columnName =  #{$!item.attrName}
+	</if>
+#end
+</trim>
+</sql>
+   
+
+<!-- 无主键值时插入记录 -->
+<insert id="add" parameterType="Object" >
+  $!{SQL.insert}
+</insert>
+
+<!-- 根据id，修改记录-->  
+ <update id="update" parameterType="Object" >
+  $!{SQL.update}
+ </update>
+ 
+ <!-- 修改记录，只修改只不为空的字段 -->
+<update id="updateBySelective" parameterType="Object" >
+	$!{SQL.updateSelective}
+</update>
+
+<!-- 删除记录 -->
+<delete id="delete" parameterType="Object">
+	$!{SQL.delete}
+</delete>
+ 
+<!-- 根据id查询 ${commentName} -->
+<select id="queryById"  resultMap="BaseResultMap" parameterType="Object">
+	#if($isUUID)
+   	select <include refid="baseColumnList" /> 
+	from ${tableName} where UUID = #{uuid,jdbcType=VARCHAR}
+   	#else
+   	$!{SQL.selectById}
+  	#end 
+</select>
+
+<!-- ${commentName} 列表总数-->
+<select id="queryByCount" resultType="java.lang.Integer"  parameterType="Object">
+	select count(1) from ${tableName} 
+	<include refid="exampleWhereClause"/>
+</select>
+  	
+<!-- 查询${commentName}列表 -->
+<select id="queryByList" resultMap="BaseResultMap"  parameterType="Object">			
+	select 
+	<include refid="baseColumnList"/>
+	from ${tableName} 
+	<include refid="exampleWhereClause"/>
+</select>
+  	
+</mapper>   

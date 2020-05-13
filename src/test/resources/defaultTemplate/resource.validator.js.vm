@@ -1,0 +1,58 @@
+var $add${upperName}Form = $("#add-${formName}-form");
+var $edit${upperName}Form = $("#edit-${formName}-form");
+function initFormValidator() {
+    $add${upperName}Form.bootstrapValidator({
+        message: '表单输入项格式不正确',
+        fields: {
+		    #foreach($item in $!{columnDatas})
+		    
+	            #if( $!{velocityCount} !=  $!{columnDatas.size()})  
+	$!item.attrName: {
+	                message: '$!item.columnComment格式不正确',
+	                validators: {
+	                    notEmpty: {
+	                        message: '$!item.columnComment不能为空'
+	                    }
+	                }
+	            },
+	            #else
+	$!item.attrName: {
+	                message: '$!item.columnComment格式不正确',
+	                validators: {
+	                    notEmpty: {
+	                        message: '$!item.columnComment不能为空'
+	                    }
+	                }
+	            }
+	            #end
+            #end
+
+    }});
+    
+    $edit${upperName}Form.bootstrapValidator({
+    message: '表单输入项格式不正确',
+    fields: {
+		    #foreach($item in $!{columnDatas})
+		    
+	            #if( $!{velocityCount} !=  $!{columnDatas.size()})  
+	$!item.attrName: {
+	                message: '$!item.columnComment格式不正确',
+	                validators: {
+	                    notEmpty: {
+	                        message: '$!item.columnComment不能为空'
+	                    }
+	                }
+	            },
+	            #else
+	$!item.attrName: {
+	                message: '$!item.columnComment格式不正确',
+	                validators: {
+	                    notEmpty: {
+	                        message: '$!item.columnComment不能为空'
+	                    }
+	                }
+	            }
+	            #end
+            #end
+    }});
+}

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <script type="text/javascript">
+        var basePath = '$!{rc.contextPath}';
+    </script>
+    ${jsBarVm}
+</head>
+<body>
+ ${navigationBarVm}
+<div class="panel panel-default">
+    <div class="panel-heading panel-primary">检索条件</div>
+    <div class="panel-body">
+        <form class="form-horizontal" id="search-${formName}-form">
+        <fieldset>
+        #set ($i=-1)
+#foreach($item in $!{columnDatas})
+	#if($item.attrName!='id' &&  $item.attrName!='uuid')
+	  	  
+		  #set($i=$i+1)
+		  #set($b=$i%4)
+		  
+	      #if($i==0||$b ==0)
+	      <div class="form-group">
+	      #end
+          <label class="col-sm-1 control-label" id="basic-searchon$!velocityCount">$!item.columnComment</label>
+          <div class="col-sm-2">
+          	<input type="text" class="form-control" id="$!item.attrName" name="$!item.attrName">
+          </div>
+	      #if($b ==3)
+	      </div>
+	      #end
+	#end
+#end
+		<div class="form-group">
+		 <div class="col-md-1">
+            <div class="btn-group" role="group" aria-label="...">
+                <button type="button" class="btn btn-primary" id="search-${formName}-btton">查询</button>
+            </div>
+          </div>
+        </div>
+        </fieldset>
+        </form>
+    </div>
+</div>
+${messageVm}
+<div class="panel panel-default">
+    <div class="panel-heading panel-primary">检索结果</div>
+    <div class="panel-body">
+        <div id="${formName}-toolbar">
+            <button id="add-${formName}-btton" class="btn btn-primary" data-toggle="modal" data-target="#add-${formName}-dialog">
+                <i class="glyphicon glyphicon-remove"></i> 新增
+            </button>
+            <button id="edit-${formName}-btton" class="btn btn-warning" disabled  data-toggle="modal" data-target="#edit-${formName}-dialog">
+                <i class="glyphicon glyphicon-remove"></i> 编辑
+            </button>
+            <button id="remove-${formName}-btton" class="btn btn-danger" disabled  data-toggle="modal" data-target="#remove-${formName}-dialog">
+                <i class="glyphicon glyphicon-remove"></i> 删除
+            </button>
+        </div>
+        <table id="${formName}-table"
+               data-toggle="table"
+               data-toolbar="#${formName}-toolbar"
+#if($isUUID)
+               data-id-field="uuid"
+#else
+               data-id-field="id"
+#end
+               data-ajax="dataList"
+               data-show-refresh="true"
+               data-show-toggle="true"
+               data-show-columns="true"
+               data-page-list="[5,10, 20, 50, 100, 200]"
+               data-page-size="10"
+               data-side-pagination="server"
+               data-row-style="rowStyle"
+               data-pagination="true">
+            <thead>
+            <tr>
+#foreach($item in $!{columnDatas})
+#if($item.attrName=='createTime' ||  $item.attrName=='createtime'||  $item.attrName=='updateTime' ||  $item.attrName=='updatetime')
+				<th data-field="$item.attrName" data-align="center" data-valign="middle" data-formatter="datetimeFormatter">$item.columnComment</th>
+#elseif($item.attrName=='uuid')
+				<th data-field="$item.attrName" data-visible="false">$item.columnComment</th>
+				<th data-field="state" data-align="center" data-valign="middle" data-checkbox="true">$item.columnComment</th>
+#elseif($item.attrName=='id')
+#if($isUUID)		       
+#else
+				<th data-field="$item.attrName" data-visible="false">$item.columnComment</th>
+				<th data-field="state" data-align="center" data-valign="middle" data-checkbox="true">$item.columnComment</th>
+#end
+#else
+				<th data-field="$item.attrName" data-align="center" data-valign="middle">$item.columnComment</th>
+#end
+#end
+				<th data-field="operateField" data-align="center" data-formatter="operateFormatter" data-valign="middle">操作</th>	
+            </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<div class="modal modal-primary" tabindex="-1" role="dialog" id="add-${formName}-dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">新建</h4>
+            </div>
+            <div class="modal-body">
+             		<ul id="add-${formName}-tab" class="nav nav-tabs marginBottom">
+                        <li class="active" id="add-home-tab">
+                            <a href="#add-home" data-toggle="tab">
+                               	 基本信息
+                            </a>
+                        </li>
+                    </ul>
+	            <div id="add-${formName}-tab-content" class="tab-content">
+			    <div class="tab-pane fade in active" id="add-home">
+				<form id="add-${formName}-form" class="form-horizontal" role="form">
+				<fieldset>
+				#foreach($item in $!{columnDatas})
+				#if($item.attrName!='id' &&  $item.attrName!='uuid' && $item.attrName!='createTime' &&  $item.attrName!='createtime'&&  $item.attrName!='updateTime' &&  $item.attrName!='updatetime')
+					<div class="form-group">
+						<label class="col-sm-3 control-label" for="$!item.attrName">$!item.columnComment:</label>
+						<div class="col-sm-8">
+							<input type="text" class="form-control" id="$!item.attrName" name="$!item.attrName">
+						</div>
+					</div>
+				#end
+				#end
+			    </fieldset>
+				</form>
+			    </div>
+	            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline pull-left" id="add-${formName}-exe-btton">保存</button>
+                    <button type="button" class="btn btn-outline" data-dismiss="modal" id="add-${formName}-close-button">关闭</button>
+                </div>
+               
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+
+<div class="modal modal-warning" tabindex="-1" role="dialog" id="edit-${formName}-dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">编辑</h4>
+            </div>
+            <div class="modal-body">
+                    <ul id="edit-${formName}-tab" class="nav nav-tabs marginBottom">
+                        <li class="active" id="edit-home-tab">
+                            <a href="#edit-home" data-toggle="tab">
+                               			 基本信息
+                            </a>
+                        </li>
+                    </ul>
+	            <div id="edit-${formName}-tab-content" class="tab-content">
+			    <div class="tab-pane fade in active" id="edit-home">
+				<form id="edit-${formName}-form" class="form-horizontal" role="form">
+				<fieldset>
+	        	   #if($isUUID)
+			       <input type="hidden" name="uuid" value="" />
+			       #else
+			       <input type="hidden" name="id" value="" />
+			       #end
+					                
+					#foreach($item in $!{columnDatas})
+					#if($item.attrName!='id' &&  $item.attrName!='uuid' && $item.attrName!='createTime' &&  $item.attrName!='createtime'&&  $item.attrName!='updateTime' &&  $item.attrName!='updatetime')
+						<div class="form-group">
+							<label class="col-sm-3 control-label" for="$!item.attrName">$!item.columnComment:</label>
+							<div class="col-sm-8">
+								<input type="text" class="form-control" id="$!item.attrName" name="$!item.attrName">
+							</div>
+						</div>
+					#end
+					#end        
+		            </fieldset>
+		            </form>
+			        </div>
+	            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline pull-left" id="edit-${formName}-exe-btton">保存</button>
+                    <button type="button" class="btn btn-outline" data-dismiss="modal" id="edit-${formName}-close-button">关闭</button>
+                </div>
+           
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+<div class="modal modal-danger" tabindex="-1" role="dialog" id="remove-${formName}-dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">删除</h4>
+            </div>
+            <div class="modal-body">
+                <p>您确认删除吗？</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline pull-left" id="remove-${formName}-exe-btton">确认</button>
+                <button type="button" class="btn btn-outline" data-dismiss="modal" id="remove-${formName}-close-btton">关闭</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+
+
+<div class="modal modal-default" tabindex="-1" role="dialog" id="a-edit-${formName}-dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">查看</h4>
+            </div>
+            <div class="modal-body">
+                    <ul id="a-edit-${formName}-tab" class="nav nav-tabs marginBottom">
+                        <li class="active" id="edit-home-tab">
+                            <a href="#edit-home" data-toggle="tab">
+                               			 基本信息
+                            </a>
+                        </li>
+                    </ul>
+	            <div id="a-edit-${formName}-tab-content" class="tab-content">
+			    <div class="tab-pane fade in active" id="edit-home">
+				<form id="a-edit-${formName}-form" class="form-horizontal" role="form">
+				<fieldset>
+	        	   #if($isUUID)
+			       <input type="hidden" name="uuid" value="" disabled="disabled"/>
+			       #else
+			       <input type="hidden" name="id" value="" disabled="disabled"/>
+			       #end
+					                
+					#foreach($item in $!{columnDatas})
+					#if($item.attrName!='id' &&  $item.attrName!='uuid' && $item.attrName!='createTime' &&  $item.attrName!='createtime'&&  $item.attrName!='updateTime' &&  $item.attrName!='updatetime')
+						<div class="form-group">
+							<label class="col-sm-3 control-label" for="$!item.attrName">$!item.columnComment:</label>
+							<div class="col-sm-8">
+								<input type="text" class="form-control" id="$!item.attrName" name="$!item.attrName" disabled="disabled">
+							</div>
+						</div>
+					#end
+					#end        
+		            </fieldset>
+		            </form>
+			        </div>
+	            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-dismiss="modal" id="a-edit-${formName}-close-button">关闭</button>
+                </div>
+           
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
+<script src="../../dist/js/pages/${lowerName}/${lowerName}List.js"></script>
+<script src="../../dist/js/pages/${lowerName}/${lowerName}List.validator.js"></script>
+<!-- Page script -->
+
+<script>
+    $(function () {
+    	initPageNavigation("1","1");
+        init${upperName}Page();
+        initFormValidator();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+package ${projectName}.service.impl;
+
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import com.ucf.framework.core.util.UUIDGenerator;
+import com.ucf.framework.paginator.model.Order;
+import com.ucf.framework.paginator.model.PageBounds;
+import com.ucf.framework.paginator.model.PageList;
+import ${projectName}.dao.${className}DAO;
+import ${projectName}.data.${className}DO;
+import ${projectName}.data.view.${className}View;
+import ${projectName}.service.${className}Service;
+
+/**
+ * 
+ * @comment ${commentName} ServiceImpl
+* @author ${author}
+ * @date ${date}
+ * @qq ${qq}
+ * @version 1.0
+ */
+ @Component("${lowerName}Service")
+public class ${className}ServiceImpl implements ${className}Service {
+	@Autowired
+    private ${className}DAO dao;
+    
+    /**
+     * 添加${commentName}
+     * @param ${commentName} View
+     * @return
+     */
+    public int add(${className}View ${lowerName}View){
+    	${className}DO ${lowerName}DO = new ${className}DO();
+        BeanUtils.copyProperties(${lowerName}View,${lowerName}DO);
+        #if($isUUID)
+        ${lowerName}DO.setUuid(UUIDGenerator.getUUID());
+        #end
+        #if($isCreateTime)
+        ${lowerName}DO.setCreateTime(new Date());
+        #end
+        #if($isUpdateTime)
+        ${lowerName}DO.setUpdateTime(new Date());
+        #end
+        return dao.add(${lowerName}DO);
+    }
+
+    /**
+     *  更新${commentName}（无条件）
+     * @param ${commentName} View
+     * @return
+     */
+    public int update(${className}View ${lowerName}View){
+    	${className}DO ${lowerName}DO = new ${className}DO();
+        BeanUtils.copyProperties(${lowerName}View,${lowerName}DO);
+        return dao.update(${lowerName}DO);
+    }
+
+    /**
+     *  更新${commentName}（有条件）
+     * @param ${commentName} View
+     * @return
+     */
+    public int updateBySelective(${className}View ${lowerName}View){
+    	${className}DO ${lowerName}DO = new ${className}DO();
+        BeanUtils.copyProperties(${lowerName}View,${lowerName}DO);
+        return dao.updateBySelective(${lowerName}DO);
+    }
+
+    /**
+     *  删除${commentName}
+     * @param uuid
+     * @return
+     */
+    public int delete(String[] uuid){
+    	return dao.delete(uuid);
+    }
+
+    /**
+     *  查询${commentName}（根据ID）
+     * @param uuid
+     * @return
+     */
+    public ${className}DO queryById(String uuid){
+    	return dao.queryById(uuid);
+    }
+
+    /**
+     * 查询${commentName}总数（有条件）
+     * @param ${commentName} View
+     * @return count
+     */
+    public Integer queryByCount(${className}View ${lowerName}View){
+    	${className}DO ${lowerName}DO = new ${className}DO();
+        BeanUtils.copyProperties(${lowerName}View,${lowerName}DO);
+        return dao.queryByCount(${lowerName}DO);
+    }
+
+    /**
+     * 查询${commentName}信息列表（有条件）
+     * @param ${commentName} DO
+     * @return List<${className}DO>
+     */
+    public PageList<${className}DO> queryByList(${className}DO ${lowerName}DO,PageBounds pageBounds){
+    	List<Order> orders=new ArrayList<Order>();
+        if(pageBounds.getOrders().size() <= 0){
+        	#if($isCreateTime)
+            orders.add(new Order("create_time", Order.Direction.DESC,""));
+            #end
+            pageBounds.setOrders(orders);
+        }
+        return dao.queryByList(${lowerName}DO, pageBounds);
+    }
+    
+    /**
+     * 查询${commentName}信息列表（有条件）
+     * @param ${commentName} DO
+     * @return List<${className}DO>
+     */
+    public List<${className}DO> queryByListNoPage(${className}DO ${lowerName}DO, String params, String order){
+    	PageBounds pageBounds = new PageBounds();
+        if(!(StringUtils.isEmpty(params)||"undefined".equalsIgnoreCase(order))){
+             List<Order> orders=new ArrayList<Order>();
+            String[] paramsStr = params.split(",");
+            for (String s : paramsStr){
+                orders.add(new Order(s, Order.Direction.fromString(order),""));
+            }
+            pageBounds.setOrders(orders);
+        }
+        return dao.queryByListNoPage(${lowerName}DO, pageBounds);
+    }
+    
+}

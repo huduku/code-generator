@@ -1,0 +1,72 @@
+package ${projectName}.dao;
+
+import java.util.List;
+import com.ucf.framework.paginator.model.PageBounds;
+import com.ucf.framework.paginator.model.PageList;
+import ${projectName}.data.${className}DO;
+
+/**
+ * 
+ * @comment ${commentName} Dao
+ * @author ${author}
+ * @date ${date}
+ * @qq ${qq}
+ * @version 1.0
+ */
+public interface ${className}DAO {
+	/**
+     * 添加${commentName}
+     * @param ${commentName} DO
+     * @return
+     */
+    public int add(${className}DO ${lowerName}DO);
+
+    /**
+     *  更新${commentName}（无条件）
+     * @param ${commentName} DO
+     * @return
+     */
+    public int update(${className}DO ${lowerName}DO);
+
+    /**
+     *  更新${commentName}（有条件）
+     * @param ${commentName} DO
+     * @return
+     */
+    public int updateBySelective(${className}DO ${lowerName}DO);
+
+    /**
+     *  删除${commentName}
+     * @param uuid
+     * @return
+     */
+    public int delete(String[] uuid);
+
+    /**
+     *  查询${commentName}（根据ID）
+     * @param uuid
+     * @return
+     */
+    public ${className}DO queryById(String uuid);
+
+    /**
+     * 查询${commentName}总数（有条件）
+     * @param ${commentName} DO
+     * @return count
+     */
+    public Integer queryByCount(${className}DO ${lowerName}DO);
+
+    /**
+     * 查询${commentName}信息列表（有条件）（待分页）
+     * @param ${commentName} DO
+     * @return PageList<${className}DO>
+     */
+    public PageList<${className}DO> queryByList(${className}DO ${lowerName}DO,PageBounds pageBounds);
+    
+    /**
+     * 查询${commentName}信息列表（有条件）（无分页）
+     * @param ${commentName} DO
+     * @return List<${className}DO>
+     */
+    public List<${className}DO> queryByListNoPage(${className}DO ${lowerName}DO,PageBounds pageBounds);
+}

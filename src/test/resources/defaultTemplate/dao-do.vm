@@ -1,0 +1,14 @@
+package ${projectName}.data;
+import ${projectName}.data.BaseDO;
+
+/**
+ * 
+ * @comment ${commentName} DO
+ * @author ${author}
+ * @date ${date}
+ * @qq ${qq}
+ * @version 1.0
+ */
+public class ${className}DO extends BaseDO {
+	${superFeilds}
+}

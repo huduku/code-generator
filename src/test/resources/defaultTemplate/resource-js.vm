@@ -1,0 +1,314 @@
+var $default${upperName}Table = $('#${formName}-table');
+var $add${upperName}Btton = $('#add-${formName}-btton');
+var $add${upperName}ExeBtton = $('#add-${formName}-exe-btton');
+var $edit${upperName}Btton = $('#edit-${formName}-btton');
+var $edit${upperName}ExeBtton = $('#edit-${formName}-exe-btton');
+var $remove${upperName}Btton = $('#remove-${formName}-btton');
+var $remove${upperName}ExeBtton = $('#remove-${formName}-exe-btton');
+var selections${upperName} = [];
+
+/**
+ * 页面初始化方法
+ */
+function init${upperName}Page(){
+    initTable();
+    initButton();
+    initDialog();
+}
+
+/**
+ * table数据加载方法
+ * @param params
+ */
+function dataList(params){
+    $default${upperName}Table.bootstrapTable('showLoading');
+    console.log(params.data);
+    messageCloseAll();
+    $.ajax({
+        url : basePath + '/${lowerName}/dataList.do?stamp='
+        +new Date().getTime()+'&sort='+params.data.sort+'&orders='+params.data.order+'&limit='
+        +params.data.limit+'&offset='+params.data.offset,
+        type : "post",
+        data : $("#search-${formName}-form").serialize(),
+        dataType : "json",
+        success : function(result, textStatus) {
+            params.success(result);
+            params.complete();
+        },
+        error : function(XMLHttpRequest, textStatus, errorThrown) {
+            messageShowDanger('Error!系统出错，请联系管理员');
+        },
+        complete : function(XMLHttpRequest, textStatus) {
+            $default${upperName}Table.bootstrapTable('hideLoading');
+        }
+    });
+}
+
+/**
+ * table初始化方法
+ */
+function initTable() {
+    $default${upperName}Table.on('check.bs.table uncheck.bs.table ' +
+        'check-all.bs.table uncheck-all.bs.table', function () {
+        $remove${upperName}Btton.prop('disabled', !$default${upperName}Table.bootstrapTable('getSelections').length);
+        $edit${upperName}Btton.prop('disabled', !($default${upperName}Table.bootstrapTable('getSelections').length==1));
+        // save your data, here just save the current page
+        selections${upperName} = getIdSelections${upperName}();
+        // push or splice the selections if you want to save all data selections
+    });
+    $default${upperName}Table.on('all.bs.table', function (e, name, args) {
+        console.log(name, args);
+    });
+
+    $(window).resize(function () {
+        $default${upperName}Table.bootstrapTable('resetView', {
+            height: getHeight()
+        });
+    });
+}
+
+/**
+ * 按钮初始化方法
+ */
+function initButton(){
+
+    /**
+     * 查询按钮初始化
+     */
+    $("#search-${formName}-btton").click(function(){
+        $default${upperName}Table.bootstrapTable('refresh', null);
+    });
+    /**
+     * table上方按钮事件（添加）
+     */
+    $add${upperName}Btton.click(function () {
+        $('#add-${formName}-dialog').on('shown.bs.modal', function () {
+            //$('#myInput').focus()
+            #foreach($item in $!{columnDatas})
+$("form[id=add-${formName}-form]  input[name=$item.attrName]").val("");
+			#end
+			$("form[id=add-${formName}-form]").bootstrapValidator( 'resetForm' , true);
+        });
+    });
+    /**
+     * 按钮执行区域（添加）
+     */
+    $add${upperName}ExeBtton.click(function(){
+        console.log(JSON.stringify($("#add-${formName}-form").serialize()));
+        var data = $("#add-${formName}-form").data('bootstrapValidator');
+        if (data) {
+            // 修复记忆的组件不验证
+            data.validate();
+            if (!data.isValid()) {
+                return false;
+            }
+        }
+        $.ajax({
+            url : basePath + "/${lowerName}/save.do",
+            type : "POST",
+            data : $("#add-${formName}-form").serialize(),
+            dataType : "json",
+            success : function(data, textStatus) {
+
+            },
+            error : function(XMLHttpRequest, textStatus, errorThrown) {
+                messageShowDanger('Error!系统出错，请联系管理员');
+            },
+            complete : function(XMLHttpRequest, textStatus) {
+                $('#add-${formName}-dialog').modal('hide');
+                $default${upperName}Table.bootstrapTable('refresh', null);
+                $default${upperName}Table.bootstrapTable('uncheckAll');
+            }
+        });
+    });
+
+    /**
+     * table上方按钮事件（编辑）
+     */
+    $edit${upperName}Btton.click(function () {
+        var uuid = selections${upperName}[0];
+        console.log(uuid);
+        $('#edit-${formName}-dialog').on('shown.bs.modal', function () {
+            $.ajax({
+                url : basePath + "/${lowerName}/getId.do",
+                type : "POST",
+                data : {"uuid":uuid},
+                dataType : "json",
+                success : function(data, textStatus) {
+                	
+                    if(data.success){
+                    $("form[id=edit-${formName}-form]").bootstrapValidator( 'resetForm' , true);
+                        console.log(data.data);
+                        #foreach($item in $!{columnDatas})
+$("form[id=edit-${formName}-form]  input[name=$item.attrName]").val(data.data.$item.attrName);
+					 	#end
+                    }else{
+                        messageShowDanger('Error!系统出错，请联系管理员');
+                        $('#edit-${formName}-dialog').modal('hide');
+                    }
+                },
+                error : function(XMLHttpRequest, textStatus, errorThrown) {
+                    messageShowDanger('Error!系统出错，请联系管理员');
+                },
+                complete : function(XMLHttpRequest, textStatus) {
+                }
+            });
+        });
+    });
+
+    /**
+     * 按钮执行区域（编辑）
+     */
+    $edit${upperName}ExeBtton.click(function (){
+        console.log(JSON.stringify($("#edit-${formName}-form").serialize()));
+        var data = $("#edit-${formName}-form").data('bootstrapValidator');
+        if (data) {
+            // 修复记忆的组件不验证
+            data.validate();
+            if (!data.isValid()) {
+                return false;
+            }
+        }
+        $.ajax({
+            url : basePath + "/${lowerName}/save.do",
+            type : "POST",
+            data : $("#edit-${formName}-form").serialize(),
+            dataType : "json",
+            success : function(data, textStatus) {
+
+            },
+            error : function(XMLHttpRequest, textStatus, errorThrown) {
+                messageShowDanger('Error!系统出错，请联系管理员');
+            },
+            complete : function(XMLHttpRequest, textStatus) {
+                $('#edit-${formName}-dialog').modal('hide');
+                $default${upperName}Table.bootstrapTable('refresh', null);
+                $default${upperName}Table.bootstrapTable('uncheckAll');
+            }
+        });
+    });
+
+    /**
+     * table上方按钮事件（删除）
+     */
+    $remove${upperName}Btton.click(function () {
+        $('#remove-${formName}-dialog').on('shown.bs.modal', function () {
+            //$('#myInput').focus()
+        });
+    });
+
+    /**
+     * 按钮执行区域（删除）
+     */
+    $remove${upperName}ExeBtton.click(function (){
+        console.log(JSON.stringify(selections${upperName}));
+        var selections${upperName}Str = "";
+        $.each(selections${upperName},function(index,value) {
+
+            if(index == 0 ){
+                selections${upperName}Str = value;
+            }else{
+                selections${upperName}Str = selections${upperName}Str + "," + value;
+            }
+        });
+        $.ajax({
+            url : basePath + "/${lowerName}/delete.do",
+            type : "POST",
+            data : {"uuidArr":selections${upperName}Str},
+            dataType : "json",
+            success : function(data, textStatus) {
+
+            },
+            error : function(XMLHttpRequest, textStatus, errorThrown) {
+                messageShowDanger('Error!系统出错，请联系管理员');
+            },
+            complete : function(XMLHttpRequest, textStatus) {
+                $('#remove-${formName}-dialog').modal('hide');
+                $default${upperName}Table.bootstrapTable('refresh', null);
+            }
+        });
+    });
+}
+
+/**
+ * 初始化弹出面板
+ */
+function initDialog(){
+    $('#add-${formName}-dialog').modal({
+        keyboard: false
+    });
+    $('#edit-${formName}-dialog').modal({
+        keyboard: false
+    });
+    $('#remove-${formName}-dialog').modal({
+        keyboard: false
+    });
+
+    $('#add-${formName}-dialog').modal('hide');
+    $('#edit-${formName}-dialog').modal('hide');
+    $('#remove-${formName}-dialog').modal('hide');
+}
+
+/**
+ * 获取选中的table项目UUID
+ * @returns {*}
+ */
+function getIdSelections${upperName}() {
+    return $.map($default${upperName}Table.bootstrapTable('getSelections'), function (row) {
+    	#if($isUUID)
+       return row.uuid
+       #else
+       return row.id
+       #end
+        
+    });
+}
+
+function getHeight() {
+    return $(window).height() - $('h1').outerHeight(true);
+}
+
+/**
+ * table项目中的操作
+ * @returns {*}
+ */
+function operateFormatter(value,row,index){
+	var option = '<a id="a-${formName}-operate-detail" data-toggle="modal" data-target="#a-edit-${formName}-dialog" href="javascript:void(0);" style="margin-right: 10px" title="操作" onclick="toOperateDetails(\''+row['uuid']+'\')" ><li class="fa fa-eye"></li></li></a>';
+    return option;
+}
+
+/**
+ * 记录执行操作
+ * @returns {*}
+ */
+function toOperateDetails(uuid){
+	
+    $('#a-edit-${formName}-dialog').on('shown.bs.modal', function () {
+            $.ajax({
+                url : basePath + "/${lowerName}/getId.do",
+                type : "POST",
+                data : {"uuid":uuid},
+                dataType : "json",
+                success : function(data, textStatus) {
+                    if(data.success){
+                        console.log(data.data);
+                        #foreach($item in $!{columnDatas})
+$("form[id=a-edit-${formName}-form]  input[name=$item.attrName]").val(data.data.$item.attrName);
+					 	#end
+                    }else{
+                        messageShowDanger('Error!系统出错，请联系管理员');
+                        $('#a-edit-${formName}-dialog').modal('hide');
+                    }
+                },
+                error : function(XMLHttpRequest, textStatus, errorThrown) {
+                    messageShowDanger('Error!系统出错，请联系管理员');
+                },
+                complete : function(XMLHttpRequest, textStatus) {
+                }
+            });
+        });
+}
+
+
+
+

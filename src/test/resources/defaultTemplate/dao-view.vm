@@ -1,0 +1,14 @@
+package ${projectName}.data.view;
+
+import java.io.Serializable;
+/**
+ * 
+ * @comment ${commentName} View
+* @author ${author}
+ * @date ${date}
+ * @qq ${qq}
+ * @version 1.0
+ */
+public class ${className}View implements Serializable{
+	${feilds}
+}
