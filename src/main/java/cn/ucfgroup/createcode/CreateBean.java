@@ -8,13 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.velocity.VelocityContext;
@@ -35,7 +29,7 @@ public class CreateBean {
     // sql（查询所有的表）
     String SQLTables = "show tables";
 
-    public static boolean isUUID=false;
+    public static boolean isUUID = false;
 
     // public void setMysqlInfo(String url, String username, String password) {
     // this.url = url;
@@ -53,7 +47,7 @@ public class CreateBean {
 
     /**
      * 查询数据库中的表
-     * 
+     *
      * @return
      * @throws SQLException
      */
@@ -74,26 +68,26 @@ public class CreateBean {
 
     /**
      * 获得表注释，用于生成java代码注释
-     * 
+     *
      * @param tableName
-     * @param dbType 数据库类型0：oracle  1：mysql
+     * @param dbType    数据库类型0：oracle  1：mysql
      * @throws SQLException
      */
-    protected String querryTableComment(String tableName,int dbType) throws SQLException {
-    	
-    	String tableCommentSql = null;
-    	if(dbType==0){
-    		// oracle
+    protected String querryTableComment(String tableName, int dbType) throws SQLException {
+
+        String tableCommentSql = null;
+        if (dbType == 0) {
+            // oracle
             tableCommentSql =
-            "select * from user_tab_comments where table_name='"
-            + tableName.toUpperCase() + "'";
-    	}else{
-    		// mysql
+                    "select * from user_tab_comments where table_name='"
+                            + tableName.toUpperCase() + "'";
+        } else {
+            // mysql
             tableCommentSql = " SELECT TABLE_COMMENT COMMENTS FROM INFORMATION_SCHEMA.TABLES  WHERE  table_name = '"
                     + tableName.toUpperCase() + "'";
-    	}            	       
+        }
         Connection con = this.getConnection();
-		PreparedStatement ps = con.prepareStatement(tableCommentSql);
+        PreparedStatement ps = con.prepareStatement(tableCommentSql);
         ResultSet rs = ps.executeQuery();
         rs.next();
         String comment = rs.getString("COMMENTS");
@@ -109,60 +103,55 @@ public class CreateBean {
 
     /**
      * 查询表的字段，封装成List
-     * 
+     *
      * @param tableName
-     * @param dbType 数据库类型0：oracle  1：mysql
+     * @param dbType    数据库类型0：oracle  1：mysql
      * @return
      * @throws SQLException
      */
-    public List<ColumnData> getColumnDatas(String tableName,int dbType)
+    public List<ColumnData> getColumnDatas(String tableName, int dbType)
             throws SQLException {
-    	
-    	String SQLColumns = null;
-    	String pkSQL = null;
-    	if(dbType==0){
-    		//Oracle
-            SQLColumns =
-            "select t1.COLUMN_NAME,t1.DATA_TYPE,t2.COMMENTS,t1.DATA_SCALE"
-            + " from user_tab_columns  t1 left outer join user_col_comments  t2"
-            +
-            " on t1.COLUMN_NAME=t2.COLUMN_NAME and t1.TABLE_NAME=t2.TABLE_NAME  where t1.TABLE_NAME='"
-            + tableName.toUpperCase() + "' ";
-           
-            
+
+        String columnSql = null;
+        String pkSQL = null;
+        if (dbType == 0) {
+            //Oracle
+            columnSql =
+                    "select t1.COLUMN_NAME,t1.DATA_TYPE,t2.COMMENTS,t1.DATA_SCALE"
+                            + " from user_tab_columns  t1 left outer join user_col_comments  t2"
+                            +
+                            " on t1.COLUMN_NAME=t2.COLUMN_NAME and t1.TABLE_NAME=t2.TABLE_NAME  where t1.TABLE_NAME='"
+                            + tableName.toUpperCase() + "' ";
+
+
             //Oracle
             pkSQL = "select cu.column_name  " +
-            		"from user_cons_columns cu, user_constraints au " +
-            		"where cu.constraint_name = au.constraint_name   and au.constraint_type = 'P'   and au.table_name = '"+ 
-            		tableName.toUpperCase() + "' ";
-    	}else{
-    		// mysql
-            SQLColumns = "SELECT COLUMN_NAME , DATA_TYPE , COLUMN_COMMENT ,CHARACTER_MAXIMUM_LENGTH DATA_SCALE "
+                    "from user_cons_columns cu, user_constraints au " +
+                    "where cu.constraint_name = au.constraint_name   and au.constraint_type = 'P'   and au.table_name = '" +
+                    tableName.toUpperCase() + "' ";
+        } else {
+            // mysql - column metadata list
+            columnSql = "SELECT COLUMN_NAME , DATA_TYPE , COLUMN_COMMENT ,CHARACTER_MAXIMUM_LENGTH DATA_SCALE "
                     + " from INFORMATION_SCHEMA.COLUMNS "
                     + " WHERE table_name = '"
                     + tableName.toUpperCase() + "'";
-            //mysql
+            //mysql - pk 主键
             pkSQL = "SELECT c.COLUMN_NAME " +
-            		"FROM  INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS t,   INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS c " +
-            		"WHERE  t.TABLE_NAME = c.TABLE_NAME    AND t.CONSTRAINT_TYPE = 'PRIMARY KEY'  AND t.TABLE_SCHEMA = '"+ 
-            		tableName.toUpperCase() + "' ";
-    	}
-        
-         
-         
-    	
-   //     System.out.println(SQLColumns);
-        
+                    "FROM  INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS t,   INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS c " +
+                    "WHERE  t.TABLE_NAME = c.TABLE_NAME    AND t.CONSTRAINT_TYPE = 'PRIMARY KEY'  AND t.TABLE_SCHEMA = '" +
+                    tableName.toUpperCase() + "' ";
+        }
+
         String pkColumn = null;
         Connection con = this.getConnection();
         PreparedStatement pkPs = con.prepareStatement(pkSQL);
         ResultSet pkrs = pkPs.executeQuery();
-        if(pkrs.next()){
-        	pkColumn = pkrs.getString(1);
+        if (pkrs.next()) {
+            pkColumn = pkrs.getString(1);
         }
-        
-        PreparedStatement ps = con.prepareStatement(SQLColumns);
-        List<ColumnData> columnList = new ArrayList<ColumnData>();
+
+        PreparedStatement ps = con.prepareStatement(columnSql);
+        List<ColumnData> columnList = new LinkedList<ColumnData>();
         ResultSet rs = ps.executeQuery();
         StringBuffer str = new StringBuffer();
         StringBuffer getset = new StringBuffer();
@@ -183,12 +172,12 @@ public class CreateBean {
             cd.setColumnName(name.toLowerCase());
             cd.setAttrName(getFeildsNameTo(cd.getColumnName()));
             String attrName = cd.getAttrName();
-            cd.setFirstUpperAttrName(attrName.substring(0, 1).toUpperCase()+attrName.substring(1, attrName.length()));
+            cd.setFirstUpperAttrName(attrName.substring(0, 1).toUpperCase() + attrName.substring(1, attrName.length()));
             cd.setDataType(javaType);
             cd.setColumnComment(comment);
             cd.setScale(scale);
             cd.setJdbcType(jdbcType);
-            if (pkColumn!=null && pkColumn.equalsIgnoreCase(cd.getColumnName())) {//主键放第一个位置
+            if (pkColumn != null && pkColumn.equalsIgnoreCase(cd.getColumnName())) {//主键放第一个位置
                 columnList.add(0, cd);
             } else {
                 columnList.add(cd);
@@ -207,7 +196,7 @@ public class CreateBean {
 
     /**
      * 生成实体Bean 的属性和set,get方法
-     * 
+     *
      * @param tableName
      * @return
      * @throws SQLException
@@ -233,54 +222,55 @@ public class CreateBean {
             getset.append("/**\r\t *\r\t * @param ").append(name)
                     .append(" the ").append(name).append(" to set")
                     .append("\r\t */");
-            
+
             getset.append("\r\t")
-            .append("public void ")
-            .append("set" + method + "(" + type + " " + name
-                    + ") {\r\t");
-        	getset.append("    this." + name + "=").append(name)
-            .append(";\r\t}");
-   /**         if(type.equals("java.util.Date")){
-            	getset.append("\r\t")
-            	.append("@JsonSerialize(using = CustomDateSerializer.class) \r\t")
-                .append("public void ")
-                .append("set" + method + "(" + type + " " + name
-                        + ") {\r\t");
-            	getset.append("    this." + name + "=").append(name)
-                .append(";\r\t}");
-            }else{
-            	getset.append("\r\t")
-                .append("public void ")
-                .append("set" + method + "(" + type + " " + name
-                        + ") {\r\t");
-            	getset.append("    this." + name + "=").append(name)
-                .append(";\r\t}");
-            }
-  **/          
+                    .append("public void ")
+                    .append("set" + method + "(" + type + " " + name
+                            + ") {\r\t");
+            getset.append("    this." + name + "=").append(name)
+                    .append(";\r\t}");
+            /**         if(type.equals("java.util.Date")){
+             getset.append("\r\t")
+             .append("@JsonSerialize(using = CustomDateSerializer.class) \r\t")
+             .append("public void ")
+             .append("set" + method + "(" + type + " " + name
+             + ") {\r\t");
+             getset.append("    this." + name + "=").append(name)
+             .append(";\r\t}");
+             }else{
+             getset.append("\r\t")
+             .append("public void ")
+             .append("set" + method + "(" + type + " " + name
+             + ") {\r\t");
+             getset.append("    this." + name + "=").append(name)
+             .append(";\r\t}");
+             }
+             **/
         }
         argv = str.append("\r\t").toString();
         method = getset.toString();
         return argv + method;
     }
-    
-    public void initParam(VelocityContext context,List<ColumnData> dataList) throws SQLException {
-    	context.put("isUUID", false);
-    	context.put("isCreateTime", false);
-    	context.put("isUpdateTime", false);
+
+    public void initParam(VelocityContext context, List<ColumnData> dataList) throws SQLException {
+        context.put("isUUID", false);
+        context.put("isCreateTime", false);
+        context.put("isUpdateTime", false);
         for (ColumnData d : dataList) {
             String name = d.getAttrName();
-            if("uuid".equals(name.toLowerCase())) {
-            	context.put("isUUID", true);
-            	isUUID=true;
-            }
-            else if("createtime".equals(name.toLowerCase()) || "createTime".equals(name.toLowerCase())) context.put("isCreateTime", true);
-            else if("updatetime".equals(name.toLowerCase()) || "updateTime".equals(name.toLowerCase())) context.put("isUpdateTime", true);
+            if ("uuid".equals(name.toLowerCase())) {
+                context.put("isUUID", true);
+                isUUID = true;
+            } else if ("createtime".equals(name.toLowerCase()) || "createTime".equals(name.toLowerCase()))
+                context.put("isCreateTime", true);
+            else if ("updatetime".equals(name.toLowerCase()) || "updateTime".equals(name.toLowerCase()))
+                context.put("isUpdateTime", true);
         }
     }
-    
+
     /**
      * 生成实体Bean 的属性和set,get方法
-     * 
+     *
      * @param tableName
      * @return
      * @throws SQLException
@@ -290,7 +280,7 @@ public class CreateBean {
         StringBuffer getset = new StringBuffer();
         for (ColumnData d : dataList) {
             String name = d.getAttrName();
-            if("id".equals(name) || "uuid".equals(name)) continue;
+            if ("id".equals(name) || "uuid".equals(name)) continue;
             String type = d.getDataType();
             String comment = d.getColumnComment();
             // type=this.getType(type);
@@ -307,14 +297,14 @@ public class CreateBean {
             getset.append("/**\r\t *\r\t * @param ").append(name)
                     .append(" the ").append(name).append(" to set")
                     .append("\r\t */");
-            
+
             getset.append("\r\t")
-            .append("public void ")
-            .append("set" + method + "(" + type + " " + name
-                    + ") {\r\t");
-        	getset.append("    this." + name + "=").append(name)
-            .append(";\r\t}");
-      
+                    .append("public void ")
+                    .append("set" + method + "(" + type + " " + name
+                            + ") {\r\t");
+            getset.append("    this." + name + "=").append(name)
+                    .append(";\r\t}");
+
         }
         argv = str.append("\r\t").toString();
         method = getset.toString();
@@ -326,7 +316,7 @@ public class CreateBean {
      * <b>功能：</b>详细的功能描述<br>
      * <b>作者：</b>肖财高<br>
      * <b>日期：</b> 2011-12-20 <br>
-     * 
+     *
      * @param tableName
      * @return
      * @throws SQLException
@@ -366,20 +356,17 @@ public class CreateBean {
         if ("char".equals(type) || "varchar".equals(type)
                 || "varchar2".equals(type) || "nvarchar2".equals(type)) {
             return "VARCHAR";
-        }
-        else if ("binary_double".equals(type)) {
+        } else if ("binary_double".equals(type)) {
             return "BINART_DOUBLE";
-        }
-        else if ("binary_float".equals(type)) {
+        } else if ("binary_float".equals(type)) {
             return "BINARY_FLOAT";
-        }
-        else if ("int".equals(type)) {
+        } else if ("int".equals(type)) {
             return "INTEGER";
         } else if ("float".equals(type)) {
             return "Float";
         } else if ("bigint".equals(type)) {
             return "BIGINT";
-        } else if ("number".equals(type)||"double".equals(type)) {
+        } else if ("number".equals(type) || "double".equals(type)) {
             return scale > 0 ? "DOUBLE" : "INTEGER";
         } else if ("date".equals(type) || "datetime".equals(type)) {
             return "DATE";
@@ -387,7 +374,7 @@ public class CreateBean {
             return "TIMESTAMP";
         } else if (type != null && type.equals("clob")) {
             return "CLOB";
-        }else if ("tinyint".equals(type) ||"TINYINT".equals(type)) {//mysql特有
+        } else if ("tinyint".equals(type) || "TINYINT".equals(type)) {//mysql特有
             return "BOOLEAN";
         }
         return null;
@@ -398,20 +385,17 @@ public class CreateBean {
         if ("char".equals(type) || "varchar".equals(type)
                 || "varchar2".equals(type) || "nvarchar2".equals(type)) {
             return "String";
-        }
-        else if ("binary_double".equals(type)) {
+        } else if ("binary_double".equals(type)) {
             return "Double";
-        }
-        else if ("binary_float".equals(type)) {
+        } else if ("binary_float".equals(type)) {
             return "Float";
-        }
-        else if ("int".equals(type)) {
+        } else if ("int".equals(type)) {
             return "Integer";
         } else if ("float".equals(type)) {
             return "Float";
         } else if ("bigint".equals(type)) {
             return "Long";
-        } else if ("number".equals(type)||"double".equals(type)) {
+        } else if ("number".equals(type) || "double".equals(type)) {
             return scale > 0 ? "Double" : "Integer";
         } else if ((type != null && type.startsWith("timestamp"))
                 || "date".equalsIgnoreCase(type)
@@ -419,15 +403,15 @@ public class CreateBean {
             return "java.util.Date";
         } else if ("clob".equals(type)) {
             return "String";
-        }else if ("tinyint".equals(type) ||"TINYINT".equals(type)) {//mysql特有
+        } else if ("tinyint".equals(type) || "TINYINT".equals(type)) {//mysql特有
             return "Boolean";
         }
         return null;
     }
 
     public void getPackage(int type, String createPath, String content,
-            String packageName, String className, String extendsClassName,
-            String... importName) throws Exception {
+                           String packageName, String className, String extendsClassName,
+                           String... importName) throws Exception {
         if (null == packageName) {
             packageName = "";
         }
@@ -440,7 +424,7 @@ public class CreateBean {
         sb.append("\r");
         sb.append("/**\r *  entity. @author wolf Date:"
                 + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-                        .format(new Date()) + "\r */");
+                .format(new Date()) + "\r */");
         sb.append("\r");
         sb.append("\rpublic class ").append(className);
         if (null != extendsClassName) {
@@ -469,7 +453,7 @@ public class CreateBean {
      * <b>功能：</b>表名转换成类名 每_首字母大写<br>
      * <b>作者：</b>肖财高<br>
      * <b>日期：</b> 2011-12-21 <br>
-     * 
+     *
      * @param tableName
      * @return
      */
@@ -480,7 +464,7 @@ public class CreateBean {
             for (int i = 0; i < split.length; i++) {
                 String tempTableName = split[i].substring(0, 1).toUpperCase()
                         + split[i].substring(1, split[i].length())
-                                .toLowerCase();
+                        .toLowerCase();
                 sb.append(tempTableName);
             }
             return sb.toString();
@@ -494,7 +478,7 @@ public class CreateBean {
     /**
      * <br>
      * <b>功能：</b>表字段名 转换驼峰命令（ _ 分割）<br>
-     * 
+     *
      * @param feildName
      * @return
      */
@@ -523,7 +507,7 @@ public class CreateBean {
      * <b>功能：</b>创建文件<br>
      * <b>作者：</b><br>
      * <b>日期：</b> 2011-12-21 <br>
-     * 
+     *
      * @param path
      * @param fileName
      * @param str
@@ -542,23 +526,23 @@ public class CreateBean {
      * <b>功能：</b>生成sql语句<br>
      * <b>作者：</b><br>
      * <b>日期：</b> 2011-12-21 <br>
-     * 
+     *
      * @param tableName
      * @throws Exception
      */
     static String selectStr = "select ";
     static String from = " from ";
 
-    public Map<String, Object> getAutoCreateSql(String tableName,int dbType)
+    public Map<String, Object> getAutoCreateSql(String tableName, int dbType)
             throws Exception {
-        return getAutoCreateSql(tableName, getColumnDatas(tableName,dbType),dbType);
+        return getAutoCreateSql(tableName, getColumnDatas(tableName, dbType), dbType);
     }
 
     public Map<String, Object> getAutoCreateSql(String tableName,
-            List<ColumnData> columnDatas,int dbType) throws Exception {
+                                                List<ColumnData> columnDatas, int dbType) throws Exception {
         Map<String, Object> sqlMap = new HashMap<String, Object>();
         if (columnDatas == null)
-            columnDatas = getColumnDatas(tableName,dbType);
+            columnDatas = getColumnDatas(tableName, dbType);
         String columns = this.getColumnSplit(columnDatas);
         String columnsAndJdbcType = this.getColumnAndJdbcTypeSplit(columnDatas);
         String[] columnList = getColumnList(columns);  // 表所有字段
@@ -567,10 +551,10 @@ public class CreateBean {
         String insert = "insert into " + tableName + "("
                 + columns.replaceAll("\\|", ",") + ")\n values(#{"
                 + columnsAndJdbcType.replaceAll("\\|", "},#{") + "})";
-        String update = getUpdateSql(tableName, columnAndJdbcTypeList,columnDatas);
+        String update = getUpdateSql(tableName, columnAndJdbcTypeList, columnDatas);
         String updateSelective = getUpdateSelectiveSql(tableName, columnDatas);
-        String selectById = getSelectByIdSql(tableName, columnAndJdbcTypeList,columnDatas);
-        String delete = getDeleteSql(tableName, columnAndJdbcTypeList,columnDatas);
+        String selectById = getSelectByIdSql(tableName, columnAndJdbcTypeList, columnDatas);
+        String delete = getDeleteSql(tableName, columnAndJdbcTypeList, columnDatas);
         sqlMap.put("columnList", columnList);
         sqlMap.put("columnFields", columnFields);
         sqlMap.put("insert",
@@ -578,7 +562,7 @@ public class CreateBean {
                         .replace("#{updateTime,jdbcType=DATE}", "#{updateTime,jdbcType=TIMESTAMP}"));
         sqlMap.put("update",
                 update.replace("#{createTime,jdbcType=DATE}", "#{createTime,jdbcType=TIMESTAMP}")
-                .replace("#{updateTime,jdbcType=DATE}", "#{updateTime,jdbcType=TIMESTAMP}"));
+                        .replace("#{updateTime,jdbcType=DATE}", "#{updateTime,jdbcType=TIMESTAMP}"));
         sqlMap.put("delete", delete);
         sqlMap.put("updateSelective", updateSelective);
         sqlMap.put("selectById", selectById);
@@ -587,36 +571,36 @@ public class CreateBean {
 
     /**
      * delete
-     * 
+     *
      * @param tableName
      * @param columnsList
      * @return
      * @throws SQLException
      */
-    public String getDeleteSql(String tableName, String[] columnsList,List<ColumnData> columnList)
+    public String getDeleteSql(String tableName, String[] columnsList, List<ColumnData> columnList)
             throws SQLException {
         List<String> columns = Arrays.asList(columnsList);
         StringBuffer sb = new StringBuffer();
-     
-        	String s=columnList.get(0).getColumnName();
-        	if(CreateBean.isUUID) s="UUID";
-            sb.append("delete ");
-            sb.append("\t from ").append(tableName).append(" where ");
-            sb.append(s).append(" in  <foreach item=\"ITEM\" collection=\"array\" open=\"(\" separator=\",\" close=\")\">  #{ITEM} </foreach>");
-        
+
+        String s = columnList.get(0).getColumnName();
+        if (CreateBean.isUUID) s = "UUID";
+        sb.append("delete ");
+        sb.append("\t from ").append(tableName).append(" where ");
+        sb.append(s).append(" in  <foreach item=\"ITEM\" collection=\"array\" open=\"(\" separator=\",\" close=\")\">  #{ITEM} </foreach>");
+
         return sb.toString();
     }
 
     /**
      * 根据id查询
-     * 
+     *
      * @param tableName
      * @param columnsList
      * @return
      * @throws SQLException
      */
     @SuppressWarnings("unused")
-    public String getSelectByIdSql(String tableName, String[] columnsList,List<ColumnData> columnList)
+    public String getSelectByIdSql(String tableName, String[] columnsList, List<ColumnData> columnList)
             throws SQLException {
         StringBuffer sb = new StringBuffer();
         String[] ids = columnsList[0].split(",");
@@ -629,7 +613,7 @@ public class CreateBean {
 
     /**
      * 获取所有的字段，并按","分割
-     * 
+     *
      * @param columns
      * @return
      * @throws SQLException
@@ -654,13 +638,13 @@ public class CreateBean {
 
     /**
      * 修改记录
-     * 
+     *
      * @param tableName
      * @param columnsList
      * @return
      * @throws SQLException
      */
-    public String getUpdateSql(String tableName, String[] columnsList,List<ColumnData> columnList)
+    public String getUpdateSql(String tableName, String[] columnsList, List<ColumnData> columnList)
             throws SQLException {
         StringBuffer sb = new StringBuffer();
         String idStr = columnsList[0];
@@ -679,18 +663,17 @@ public class CreateBean {
                 sb.append(",");
             }
         }
-        String update="";
-        if(isUUID){
-        	update = "update " + tableName + " set " + sb.toString()
+        String update = "";
+        if (isUUID) {
+            update = "update " + tableName + " set " + sb.toString()
                     + " where UUID=#{uuid,jdbcType=VARCHAR}";
-        }
-        else update = "update " + tableName + " set " + sb.toString()
+        } else update = "update " + tableName + " set " + sb.toString()
                 + " where " + columnList.get(0).getColumnName() + "=#{" + idStr + "}";
         return update;
     }
 
     public String getUpdateSelectiveSql(String tableName,
-            List<ColumnData> columnList) throws SQLException {
+                                        List<ColumnData> columnList) throws SQLException {
         StringBuffer sb = new StringBuffer();
         ColumnData cd = columnList.get(0); // 获取第一条记录，主键
         sb.append("\t<trim  suffixOverrides=\",\" >\n");
@@ -710,12 +693,11 @@ public class CreateBean {
             sb.append("\t</if>\n");
         }
         sb.append("\t</trim>");
-        String update="";
-        if(isUUID){
-        	update = "update " + tableName + " set \n" + sb.toString()
+        String update = "";
+        if (isUUID) {
+            update = "update " + tableName + " set \n" + sb.toString()
                     + " where UUID=#{uuid,jdbcType=VARCHAR}";
-        }
-        else update = "update " + tableName + " set \n" + sb.toString()
+        } else update = "update " + tableName + " set \n" + sb.toString()
                 + " where " + cd.getColumnName() + "=#{" + cd.getAttrName()
                 + ",jdbcType=" + cd.getJdbcType() + "}";
         return update;
@@ -726,7 +708,7 @@ public class CreateBean {
      * <b>功能：</b>获取所有列名字<br>
      * <b>作者：</b>肖财高<br>
      * <b>日期：</b> 2011-12-21 <br>
-     * 
+     *
      * @param tableName
      * @return
      * @throws SQLException
